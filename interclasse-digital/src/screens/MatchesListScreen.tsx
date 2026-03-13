@@ -1,8 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, FlatList, StyleSheet, Text, View } from 'react-native';
-import { ExternalMatch, getMatchesApi } from '../services/api';
-import { getStoredMatches } from '../storage/matchesStorage';
+import { getStoredMatches, persistMatches } from '../storage/matchesStorage';
 import { Match } from '../types';
 
 interface Props {
@@ -11,19 +10,39 @@ interface Props {
 
 export function MatchesListScreen({ isActive }: Props) {
   const [localMatches, setLocalMatches] = useState<Match[]>([]);
-  const [externalMatches, setExternalMatches] = useState<ExternalMatch[]>([]);
   const [loading, setLoading] = useState(false);
+  const [resultPickerFor, setResultPickerFor] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [stored, apiData] = await Promise.all([getStoredMatches(), getMatchesApi()]);
+      const stored = await getStoredMatches();
       setLocalMatches(stored);
-      setExternalMatches(apiData);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const setMatchResult = async (matchId: string, result: 'A' | 'DRAW' | 'B') => {
+    const nextMatches = localMatches.map((item) =>
+      item.id === matchId
+        ? {
+            ...item,
+            result,
+          }
+        : item
+    );
+    setLocalMatches(nextMatches);
+    await persistMatches(nextMatches);
+    setResultPickerFor(null);
+  };
+
+  const resultLabel = (item: Match) => {
+    if (item.result === 'A') return `Vencedor: ${item.roomA}`;
+    if (item.result === 'B') return `Vencedor: ${item.roomB}`;
+    if (item.result === 'DRAW') return 'Resultado: Empate';
+    return 'Resultado: Nao definido';
+  };
 
   useEffect(() => {
     if (isActive) {
@@ -33,7 +52,7 @@ export function MatchesListScreen({ isActive }: Props) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>3. Lista de Partidas</Text>
+      <Text style={styles.title}>Lista de Partidas</Text>
       <Text style={styles.subtitleText}>Painel unificado com partidas locais e dados da API.</Text>
       <Pressable style={styles.primaryButton} onPress={loadData} disabled={loading}>
         <Text style={styles.primaryButtonText}>{loading ? 'Atualizando...' : 'Atualizar Lista'}</Text>
@@ -55,22 +74,28 @@ export function MatchesListScreen({ isActive }: Props) {
             <Text style={styles.itemSubtext}>
               {item.date} {item.time} - {item.location}
             </Text>
-          </View>
-        )}
-      />
-
-      <Text style={styles.subtitle}>Dados externos (GET API)</Text>
-      <FlatList
-        data={externalMatches}
-        keyExtractor={(item) => String(item.id)}
-        renderItem={({ item }) => (
-          <View style={styles.itemCard}>
-            <Text style={styles.itemText}>
-              #{item.id} - {item.sport}: {item.homeTeam} x {item.awayTeam}
-            </Text>
-            <Text style={styles.itemSubtext}>
-              {item.date} {item.hour} - {item.court}
-            </Text>
+            <Text style={styles.resultText}>{resultLabel(item)}</Text>
+            <Pressable
+              style={styles.defineButton}
+              onPress={() =>
+                setResultPickerFor((current) => (current === item.id ? null : item.id))
+              }
+            >
+              <Text style={styles.defineButtonText}>Definir resultado</Text>
+            </Pressable>
+            {resultPickerFor === item.id ? (
+              <View style={styles.resultRow}>
+                <Pressable style={styles.resultButton} onPress={() => setMatchResult(item.id, 'A')}>
+                  <Text style={styles.resultButtonText}>A venceu</Text>
+                </Pressable>
+                <Pressable style={styles.resultButton} onPress={() => setMatchResult(item.id, 'DRAW')}>
+                  <Text style={styles.resultButtonText}>Empate</Text>
+                </Pressable>
+                <Pressable style={styles.resultButton} onPress={() => setMatchResult(item.id, 'B')}>
+                  <Text style={styles.resultButtonText}>B venceu</Text>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
         )}
       />
@@ -143,5 +168,38 @@ const styles = StyleSheet.create({
   itemSubtext: {
     color: '#3C4A5B',
     marginTop: 4,
+  },
+  resultText: {
+    marginTop: 6,
+    color: '#173A68',
+    fontWeight: '700',
+  },
+  resultRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  defineButton: {
+    marginTop: 8,
+    backgroundColor: '#173A68',
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  defineButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  resultButton: {
+    backgroundColor: '#E8EFFB',
+    borderRadius: 8,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+  },
+  resultButtonText: {
+    color: '#173A68',
+    fontWeight: '700',
+    fontSize: 12,
   },
 });

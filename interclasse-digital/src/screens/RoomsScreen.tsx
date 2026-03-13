@@ -2,22 +2,75 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { postRoomApi } from '../services/api';
+import { getStoredMatches } from '../storage/matchesStorage';
 import { getStoredRooms, persistRooms } from '../storage/roomsStorage';
-import { Room } from '../types';
+import { LocalRankingRow, Match, Room } from '../types';
+
+function buildRanking(rooms: Room[], matches: Match[]): LocalRankingRow[] {
+  const rankingMap = new Map<string, LocalRankingRow>();
+
+  rooms.forEach((room) => {
+    rankingMap.set(room.name.toUpperCase(), {
+      room: room.name.toUpperCase(),
+      points: 0,
+      played: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+    });
+  });
+
+  matches.forEach((match) => {
+    if (!match.result) return;
+
+    const roomA = rankingMap.get(match.roomA.toUpperCase());
+    const roomB = rankingMap.get(match.roomB.toUpperCase());
+    if (!roomA || !roomB) return;
+
+    roomA.played += 1;
+    roomB.played += 1;
+
+    if (match.result === 'A') {
+      roomA.wins += 1;
+      roomA.points += 3;
+      roomB.losses += 1;
+      return;
+    }
+
+    if (match.result === 'B') {
+      roomB.wins += 1;
+      roomB.points += 3;
+      roomA.losses += 1;
+      return;
+    }
+
+    roomA.draws += 1;
+    roomB.draws += 1;
+    roomA.points += 1;
+    roomB.points += 1;
+  });
+
+  return [...rankingMap.values()].sort((left, right) => {
+    if (right.points !== left.points) return right.points - left.points;
+    if (right.wins !== left.wins) return right.wins - left.wins;
+    return left.room.localeCompare(right.room);
+  });
+}
 
 export function RoomsScreen() {
   const [roomName, setRoomName] = useState('');
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [ranking, setRanking] = useState<LocalRankingRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showList, setShowList] = useState(false);
+
+  const refreshLocalData = async () => {
+    const [storedRooms, storedMatches] = await Promise.all([getStoredRooms(), getStoredMatches()]);
+    setRooms(storedRooms);
+    setRanking(buildRanking(storedRooms, storedMatches));
+  };
 
   useEffect(() => {
-    async function loadRooms() {
-      const stored = await getStoredRooms();
-      setRooms(stored);
-    }
-
-    loadRooms();
+    refreshLocalData();
   }, []);
 
   const saveRoom = async () => {
@@ -38,6 +91,8 @@ export function RoomsScreen() {
       setRooms(nextRooms);
       await persistRooms(nextRooms);
       await postRoomApi(room);
+      const storedMatches = await getStoredMatches();
+      setRanking(buildRanking(nextRooms, storedMatches));
       setRoomName('');
       Alert.alert('Sucesso', 'Sala salva no AsyncStorage e enviada via POST.');
     } catch {
@@ -47,22 +102,9 @@ export function RoomsScreen() {
     }
   };
 
-  const listAllRooms = async () => {
-    const stored = await getStoredRooms();
-    setRooms(stored);
-    setShowList(true);
-  };
-
-  const deleteAllRooms = async () => {
-    await persistRooms([]);
-    setRooms([]);
-    setShowList(false);
-    Alert.alert('Sucesso', 'Todas as salas foram removidas.');
-  };
-
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>1. Cadastro de Salas</Text>
+      <Text style={styles.title}>Cadastro de Salas</Text>
       <Text style={styles.subtitleText}>Registre as turmas para montar os confrontos.</Text>
       <TextInput
         placeholder="Nome da sala (ex: 2A)"
@@ -74,31 +116,43 @@ export function RoomsScreen() {
         <Text style={styles.primaryButtonText}>{loading ? 'Salvando...' : 'Salvar Sala'}</Text>
       </Pressable>
 
-      <View style={styles.actionsRow}>
-        <Pressable style={styles.secondaryButton} onPress={listAllRooms}>
-          <Text style={styles.secondaryButtonText}>Listar Salas</Text>
-        </Pressable>
-        <Pressable style={styles.dangerButton} onPress={deleteAllRooms}>
-          <Text style={styles.dangerButtonText}>Excluir Salas</Text>
-        </Pressable>
-      </View>
+      <Text style={styles.subtitle}>Salas cadastradas</Text>
+      <FlatList
+        data={rooms}
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={<Text style={styles.empty}>Nenhuma sala cadastrada.</Text>}
+        renderItem={({ item }) => (
+          <View style={styles.itemRow}>
+            <MaterialCommunityIcons name="google-classroom" size={18} color="#1D3557" />
+            <Text style={styles.itemText}>{item.name}</Text>
+          </View>
+        )}
+      />
 
-      {showList ? (
-        <>
-          <Text style={styles.subtitle}>Salas cadastradas</Text>
-          <FlatList
-            data={rooms}
-            keyExtractor={(item) => item.id}
-            ListEmptyComponent={<Text style={styles.empty}>Nenhuma sala cadastrada.</Text>}
-            renderItem={({ item }) => (
-              <View style={styles.itemRow}>
-                <MaterialCommunityIcons name="google-classroom" size={18} color="#1D3557" />
-                <Text style={styles.itemText}>{item.name}</Text>
-              </View>
-            )}
-          />
-        </>
-      ) : null}
+      <Text style={styles.subtitle}>Classificacao</Text>
+      <View style={styles.tableHeader}>
+        <Text style={[styles.tableCell, styles.roomColumn]}>Sala</Text>
+        <Text style={styles.tableCell}>P</Text>
+        <Text style={styles.tableCell}>J</Text>
+        <Text style={styles.tableCell}>V</Text>
+        <Text style={styles.tableCell}>E</Text>
+        <Text style={styles.tableCell}>D</Text>
+      </View>
+      <FlatList
+        data={ranking}
+        keyExtractor={(item) => item.room}
+        ListEmptyComponent={<Text style={styles.empty}>Sem resultados para classificar.</Text>}
+        renderItem={({ item }) => (
+          <View style={styles.tableRow}>
+            <Text style={[styles.tableValue, styles.roomColumn]}>{item.room}</Text>
+            <Text style={styles.tableValue}>{item.points}</Text>
+            <Text style={styles.tableValue}>{item.played}</Text>
+            <Text style={styles.tableValue}>{item.wins}</Text>
+            <Text style={styles.tableValue}>{item.draws}</Text>
+            <Text style={styles.tableValue}>{item.losses}</Text>
+          </View>
+        )}
+      />
     </View>
   );
 }
@@ -141,33 +195,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
   },
-  actionsRow: {
-    flexDirection: 'row',
-    marginTop: 10,
-    gap: 8,
-  },
-  secondaryButton: {
-    flex: 1,
-    backgroundColor: '#E8EFFB',
-    borderRadius: 10,
-    paddingVertical: 11,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: '#173A68',
-    fontWeight: '700',
-  },
-  dangerButton: {
-    flex: 1,
-    backgroundColor: '#FCEAEA',
-    borderRadius: 10,
-    paddingVertical: 11,
-    alignItems: 'center',
-  },
-  dangerButtonText: {
-    color: '#A21D25',
-    fontWeight: '700',
-  },
   subtitle: {
     marginTop: 14,
     marginBottom: 8,
@@ -189,5 +216,30 @@ const styles = StyleSheet.create({
   },
   empty: {
     color: '#5A6678',
+  },
+  tableHeader: {
+    marginTop: 4,
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#DDE6F2',
+    paddingBottom: 6,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EDF2F8',
+  },
+  tableCell: {
+    flex: 1,
+    fontWeight: '700',
+    color: '#173A68',
+  },
+  tableValue: {
+    flex: 1,
+    color: '#2E425C',
+  },
+  roomColumn: {
+    flex: 2,
   },
 });

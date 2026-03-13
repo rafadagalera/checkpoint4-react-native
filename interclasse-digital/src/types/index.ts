@@ -18,6 +18,7 @@ export interface Match {
   homeScore?: number;
   awayScore?: number;
   status?: 'Agendado' | 'Finalizado';
+  result?: 'A' | 'DRAW' | 'B';
   createdAt: string;
 }
 
@@ -25,6 +26,15 @@ export interface RankingRow {
   room: string;
   points: number;
   games: number;
+}
+
+export interface LocalRankingRow {
+  room: string;
+  points: number;
+  played: number;
+  wins: number;
+  draws: number;
+  losses: number;
 }
 
 export interface CreateMatchPayload {

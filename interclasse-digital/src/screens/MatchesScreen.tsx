@@ -1,8 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { postMatchApi } from '../services/api';
 import { getStoredMatches, persistMatches } from '../storage/matchesStorage';
+import { getStoredRooms } from '../storage/roomsStorage';
 import { Match, Sport } from '../types';
 
 const sports: Sport[] = ['Futsal', 'Volei', 'Basquete', 'Esports'];
@@ -21,8 +21,16 @@ export function MatchesScreen() {
   const validateTime = (value: string) => /^\d{2}:\d{2}$/.test(value);
 
   const saveMatch = async () => {
-    if (!roomA.trim() || !roomB.trim() || !date.trim() || !time.trim() || !location.trim()) {
+    const roomAValue = roomA.trim().toUpperCase();
+    const roomBValue = roomB.trim().toUpperCase();
+
+    if (!roomAValue || !roomBValue || !date.trim() || !time.trim() || !location.trim()) {
       Alert.alert('Validacao', 'Preencha todos os campos da partida.');
+      return;
+    }
+
+    if (roomAValue === roomBValue) {
+      Alert.alert('Validacao', 'As salas devem ser diferentes.');
       return;
     }
 
@@ -33,11 +41,18 @@ export function MatchesScreen() {
 
     setLoading(true);
     try {
+      const storedRooms = await getStoredRooms();
+      const availableRooms = new Set(storedRooms.map((roomItem) => roomItem.name.toUpperCase()));
+      if (!availableRooms.has(roomAValue) || !availableRooms.has(roomBValue)) {
+        Alert.alert('Validacao', 'As duas salas precisam estar cadastradas na tela de Salas.');
+        return;
+      }
+
       const match: Match = {
         id: `${Date.now()}`,
         sport,
-        roomA: roomA.trim().toUpperCase(),
-        roomB: roomB.trim().toUpperCase(),
+        roomA: roomAValue,
+        roomB: roomBValue,
         date: date.trim(),
         time: time.trim(),
         location: location.trim(),
@@ -47,14 +62,13 @@ export function MatchesScreen() {
       const current = await getStoredMatches();
       const nextMatches = [match, ...current];
       await persistMatches(nextMatches);
-      await postMatchApi(match);
 
       setRoomA('');
       setRoomB('');
       setDate('');
       setTime('');
       setLocation('');
-      Alert.alert('Sucesso', 'Partida salva no AsyncStorage e enviada via POST.');
+      Alert.alert('Sucesso', 'Partida salva no AsyncStorage.');
     } catch {
       Alert.alert('Erro', 'Falha ao integrar com API.');
     } finally {
@@ -64,7 +78,7 @@ export function MatchesScreen() {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>2. Cadastro de Partidas</Text>
+      <Text style={styles.title}>Cadastro de Partidas</Text>
       <Text style={styles.subtitleText}>Configure um jogo com data, horario e local da partida.</Text>
 
       <Text style={styles.label}>Modalidade</Text>
