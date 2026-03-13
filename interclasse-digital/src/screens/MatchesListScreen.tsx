@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
-import { Button, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Pressable, FlatList, StyleSheet, Text, View } from 'react-native';
 import { ExternalMatch, getMatchesApi } from '../services/api';
 import { getStoredMatches } from '../storage/matchesStorage';
 import { Match } from '../types';
@@ -34,7 +34,10 @@ export function MatchesListScreen({ isActive }: Props) {
   return (
     <View style={styles.card}>
       <Text style={styles.title}>3. Lista de Partidas</Text>
-      <Button title={loading ? 'Atualizando...' : 'Atualizar Lista'} onPress={loadData} disabled={loading} />
+      <Text style={styles.subtitleText}>Painel unificado com partidas locais e dados da API.</Text>
+      <Pressable style={styles.primaryButton} onPress={loadData} disabled={loading}>
+        <Text style={styles.primaryButtonText}>{loading ? 'Atualizando...' : 'Atualizar Lista'}</Text>
+      </Pressable>
 
       <Text style={styles.subtitle}>Partidas locais (AsyncStorage)</Text>
       <FlatList
@@ -44,7 +47,7 @@ export function MatchesListScreen({ isActive }: Props) {
         renderItem={({ item }) => (
           <View style={styles.itemCard}>
             <View style={styles.row}>
-              <MaterialCommunityIcons name="calendar-month" size={18} color="#1D3557" />
+              <MaterialCommunityIcons name="calendar-month" size={18} color="#275D9A" />
               <Text style={styles.itemText}>
                 {item.sport}: {item.roomA} x {item.roomB}
               </Text>
@@ -77,6 +80,7 @@ export function MatchesListScreen({ isActive }: Props) {
 
 const styles = StyleSheet.create({
   card: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
     padding: 12,
@@ -84,10 +88,25 @@ const styles = StyleSheet.create({
     borderColor: '#D8DEE8',
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
     color: '#102542',
-    marginBottom: 8,
+    marginBottom: 4,
+  },
+  subtitleText: {
+    color: '#4E6078',
+    marginBottom: 10,
+    lineHeight: 20,
+  },
+  primaryButton: {
+    backgroundColor: '#19345F',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   subtitle: {
     marginTop: 14,
@@ -101,11 +120,16 @@ const styles = StyleSheet.create({
   },
   itemCard: {
     borderWidth: 1,
-    borderColor: '#E6ECF4',
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 6,
-    backgroundColor: '#FAFCFF',
+    borderColor: '#DAE3F1',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 8,
+    backgroundColor: '#F7FAFF',
+    shadowColor: '#112A46',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   row: {
     flexDirection: 'row',
