@@ -1,7 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Header } from './src/components/Header';
 import { ModalitiesList } from './src/components/ModalitiesList';
 import { MatchesListScreen } from './src/screens/MatchesListScreen';
@@ -19,9 +20,9 @@ export default function App() {
   const screenTitle = screen === 'home'
     ? 'Pagina Inicial'
     : screen === 'rooms'
-      ? 'Cadastrar uma sala'
+      ? 'Cadastro de Salas'
       : screen === 'matches'
-        ? 'Cadastrar uma partida'
+        ? 'Cadastro de Partidas'
         : 'Lista de Partidas';
 
   const navItems: { key: Screen; label: string; icon: keyof typeof MaterialCommunityIcons.glyphMap }[] = [
@@ -30,6 +31,15 @@ export default function App() {
     { key: 'matches', label: 'Partidas', icon: 'whistle' },
     { key: 'list', label: 'Lista', icon: 'format-list-bulleted' },
   ];
+
+  const clearAllStorage = async () => {
+    try {
+      await AsyncStorage.clear();
+      Alert.alert('Sucesso', 'Todo o AsyncStorage foi limpo.');
+    } catch {
+      Alert.alert('Erro', 'Nao foi possivel limpar o storage.');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -49,6 +59,9 @@ export default function App() {
               <Text style={styles.placeholderText}>
                 Acompanhe modalidades, organize salas e monte partidas em poucos toques.
               </Text>
+              <Pressable style={styles.clearStorageButton} onPress={clearAllStorage}>
+                <Text style={styles.clearStorageButtonText}>Limpar todo o storage</Text>
+              </Pressable>
               <ModalitiesList modalities={modalities} onNavigate={setScreen} />
             </ScrollView>
           ) : null}
@@ -144,6 +157,17 @@ const styles = StyleSheet.create({
     color: '#4B5C72',
     marginBottom: 12,
     lineHeight: 20,
+  },
+  clearStorageButton: {
+    backgroundColor: '#A21D25',
+    borderRadius: 10,
+    paddingVertical: 11,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  clearStorageButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   footerNav: {
     flexDirection: 'row',
