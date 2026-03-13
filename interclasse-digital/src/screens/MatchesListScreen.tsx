@@ -66,7 +66,7 @@ export function MatchesListScreen({ isActive }: Props) {
         renderItem={({ item }) => (
           <View style={styles.itemCard}>
             <Text style={styles.itemText}>
-              #{item.id} - {item.homeTeam} x {item.awayTeam}
+              #{item.id} - {item.sport}: {item.homeTeam} x {item.awayTeam}
             </Text>
             <Text style={styles.itemSubtext}>
               {item.date} {item.hour} - {item.court}

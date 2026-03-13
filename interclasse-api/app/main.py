@@ -15,6 +15,7 @@ class Classroom(ClassroomCreate):
 
 
 class MatchCreate(BaseModel):
+    sport: str
     homeTeam: str
     awayTeam: str
     date: str

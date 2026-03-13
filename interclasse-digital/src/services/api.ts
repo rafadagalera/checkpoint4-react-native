@@ -12,6 +12,7 @@ const api = axios.create({
 
 export interface ExternalMatch {
   id: number;
+  sport: string;
   homeTeam: string;
   awayTeam: string;
   date: string;
@@ -25,6 +26,7 @@ export interface RoomPayload {
 }
 
 export interface MatchPayload {
+  sport: string;
   homeTeam: string;
   awayTeam: string;
   date: string;
@@ -43,6 +45,7 @@ export async function postRoomApi(room: Room) {
 
 export async function postMatchApi(match: Match) {
   const payload: MatchPayload = {
+    sport: match.sport,
     homeTeam: match.roomA,
     awayTeam: match.roomB,
     date: match.date,

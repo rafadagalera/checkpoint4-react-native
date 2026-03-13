@@ -38,7 +38,7 @@ curl -X POST "http://127.0.0.1:8000/classrooms" \
 ```bash
 curl -X POST "http://127.0.0.1:8000/matches" \
   -H "Content-Type: application/json" \
-  -d '{"homeTeam":"2A","awayTeam":"2B","date":"20/03/2026","hour":"14:30","court":"Quadra 1"}'
+  -d '{"sport":"Futsal","homeTeam":"2A","awayTeam":"2B","date":"20/03/2026","hour":"14:30","court":"Quadra 1"}'
 ```
 
 ### 3) Listar partidas (GET `/matches`)

@@ -5,7 +5,7 @@ API leve para substituir JSONPlaceholder no projeto Interclasse.
 ## Endpoints
 
 - `POST /classrooms` (cadastro de sala com `Name` e `ID`)
-- `POST /matches` (cadastro de partida com `homeTeam`, `awayTeam`, `date`, `hour`, `court`)
+- `POST /matches` (cadastro de partida com `sport`, `homeTeam`, `awayTeam`, `date`, `hour`, `court`)
 - `GET /matches?_limit=8` (lista de partidas)
 - `GET /health` (status da API)
 
