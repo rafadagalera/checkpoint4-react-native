@@ -11,21 +11,11 @@ export interface Match {
   sport: Sport;
   roomA: string;
   roomB: string;
-  room?: string;
   date: string;
   time: string;
   location: string;
-  homeScore?: number;
-  awayScore?: number;
-  status?: 'Agendado' | 'Finalizado';
   result?: 'A' | 'DRAW' | 'B';
   createdAt: string;
-}
-
-export interface RankingRow {
-  room: string;
-  points: number;
-  games: number;
 }
 
 export interface LocalRankingRow {
@@ -35,14 +25,4 @@ export interface LocalRankingRow {
   wins: number;
   draws: number;
   losses: number;
-}
-
-export interface CreateMatchPayload {
-  sport: Sport;
-  room: string;
-  date: string;
-  time: string;
-  location: string;
-  homeScore?: number;
-  awayScore?: number;
 }
