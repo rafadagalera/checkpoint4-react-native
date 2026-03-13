@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { postMatchApi } from '../services/api';
 import { getStoredMatches, persistMatches } from '../storage/matchesStorage';
 import { getStoredRooms } from '../storage/roomsStorage';
 import { Match, Sport } from '../types';
@@ -62,15 +63,16 @@ export function MatchesScreen() {
       const current = await getStoredMatches();
       const nextMatches = [match, ...current];
       await persistMatches(nextMatches);
+      await postMatchApi(match);
 
       setRoomA('');
       setRoomB('');
       setDate('');
       setTime('');
       setLocation('');
-      Alert.alert('Sucesso', 'Partida salva no AsyncStorage.');
+      Alert.alert('Sucesso', 'Partida salva no AsyncStorage e enviada para API.');
     } catch {
-      Alert.alert('Erro', 'Falha ao integrar com API.');
+      Alert.alert('Erro', 'Falha ao salvar partida localmente ou enviar para API.');
     } finally {
       setLoading(false);
     }

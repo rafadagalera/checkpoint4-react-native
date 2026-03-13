@@ -63,9 +63,13 @@ export function RoomsScreen() {
   const [loading, setLoading] = useState(false);
 
   const refreshLocalData = async () => {
-    const [storedRooms, storedMatches] = await Promise.all([getStoredRooms(), getStoredMatches()]);
-    setRooms(storedRooms);
-    setRanking(buildRanking(storedRooms, storedMatches));
+    try {
+      const [storedRooms, storedMatches] = await Promise.all([getStoredRooms(), getStoredMatches()]);
+      setRooms(storedRooms);
+      setRanking(buildRanking(storedRooms, storedMatches));
+    } catch {
+      Alert.alert('Erro', 'Falha ao carregar salas e classificacao.');
+    }
   };
 
   useEffect(() => {
@@ -80,9 +84,15 @@ export function RoomsScreen() {
 
     setLoading(true);
     try {
+      const normalizedName = roomName.trim().toUpperCase();
+      if (rooms.some((item) => item.name.toUpperCase() === normalizedName)) {
+        Alert.alert('Validacao', 'Essa sala ja foi cadastrada.');
+        return;
+      }
+
       const room: Room = {
         id: `${Date.now()}`,
-        name: roomName.trim().toUpperCase(),
+        name: normalizedName,
         createdAt: new Date().toISOString(),
       };
 
@@ -103,7 +113,7 @@ export function RoomsScreen() {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Cadastro de Salas</Text>
+      <Text style={styles.title}>Gerenciar salas</Text>
       <Text style={styles.subtitleText}>Registre as turmas para montar os confrontos.</Text>
       <TextInput
         placeholder="Nome da sala (ex: 2A)"

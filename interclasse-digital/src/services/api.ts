@@ -10,8 +10,12 @@ const api = axios.create({
   timeout: 8000,
 });
 
-export interface ExternalMatch {
-  id: number;
+export interface RoomPayload {
+  Name: string;
+  ID: string;
+}
+
+export interface MatchPayload {
   sport: string;
   homeTeam: string;
   awayTeam: string;
@@ -20,12 +24,8 @@ export interface ExternalMatch {
   court: string;
 }
 
-export interface RoomPayload {
-  Name: string;
-  ID: string;
-}
-
-export interface MatchPayload {
+export interface ExternalMatch {
+  id: number;
   sport: string;
   homeTeam: string;
   awayTeam: string;
@@ -56,9 +56,9 @@ export async function postMatchApi(match: Match) {
   return response.data;
 }
 
-export async function getMatchesApi(): Promise<ExternalMatch[]> {
+export async function getMatchesApi() {
   const response = await api.get<ExternalMatch[]>('/matches', {
-    params: { _limit: 8 },
+    params: { _limit: 30 },
   });
   return response.data;
 }

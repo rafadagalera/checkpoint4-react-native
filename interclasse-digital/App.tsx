@@ -20,10 +20,10 @@ export default function App() {
   const screenTitle = screen === 'home'
     ? 'Pagina Inicial'
     : screen === 'rooms'
-      ? 'Cadastro de Salas'
+      ? 'Gerenciar salas'
       : screen === 'matches'
-        ? 'Cadastro de Partidas'
-        : 'Lista de Partidas';
+        ? 'Cadastrar partidas'
+        : 'Lista de partidas';
 
   const navItems: { key: Screen; label: string; icon: keyof typeof MaterialCommunityIcons.glyphMap }[] = [
     { key: 'home', label: 'Home', icon: 'home-variant' },

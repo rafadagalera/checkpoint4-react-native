@@ -1,9 +1,16 @@
-# Interclasse Monorepo
+# Interclasse digital
 
-Monorepo com:
+### Esse repositório serve como entrega do Checkpoint 4 da disciplina de Mobile Development ministrada a turma 3ESPS. O repositório conta com uma aplicação desenvolvida em React Native para a gestão de um campeonato Interclasses, juntamente com uma API desenvolvida em Python para integração. O aplicativo disponibiliza o cadastro de salas e gerenciamento de partidas (Async Storage e API).
+
+
+## Estrutura de pastas
 
 - `interclasse-digital/` (app React Native)
-- `interclasse-api/` (API FastAPI local que substitui JSONPlaceholder)
+- `interclasse-api/` (API FastAPI)
+
+
+## Instruções 
+
 
 ## API local (FastAPI)
 
@@ -46,3 +53,19 @@ curl -X POST "http://127.0.0.1:8000/matches" \
 ```bash
 curl -X GET "http://127.0.0.1:8000/matches?_limit=8"
 ```
+
+## Endpoints da API
+
+- `POST /classrooms` (cadastro de sala com `Name` e `ID`)
+- `POST /matches` (cadastro de partida com `sport`, `homeTeam`, `awayTeam`, `date`, `hour`, `court`)
+- `GET /matches?_limit=8` (lista de partidas)
+- `GET /health` (status da API)
+
+
+## Integrantes:
+
+#### Rafael Nascimento RM 553117
+#### Beatriz Rocha RM 553455 
+#### Iago Diniz RM 553776
+#### Larissa Estella RM 552695
+#### Enzzo Monteiro RM 552616

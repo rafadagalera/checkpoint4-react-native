@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, FlatList, StyleSheet, Text, View } from 'react-native';
+import { ExternalMatch, getMatchesApi } from '../services/api';
 import { getStoredMatches, persistMatches } from '../storage/matchesStorage';
 import { Match } from '../types';
 
@@ -12,29 +13,42 @@ export function MatchesListScreen({ isActive }: Props) {
   const [localMatches, setLocalMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(false);
   const [resultPickerFor, setResultPickerFor] = useState<string | null>(null);
+  const [apiMatches, setApiMatches] = useState<ExternalMatch[]>([]);
+  const [apiLoading, setApiLoading] = useState(false);
+  const [apiModalVisible, setApiModalVisible] = useState(false);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (showSuccessMessage = false) => {
     setLoading(true);
     try {
       const stored = await getStoredMatches();
       setLocalMatches(stored);
+      if (showSuccessMessage) {
+        Alert.alert('Sucesso', 'Partidas atualizadas com sucesso.');
+      }
+    } catch {
+      Alert.alert('Erro', 'Falha ao carregar partidas salvas.');
     } finally {
       setLoading(false);
     }
   }, []);
 
   const setMatchResult = async (matchId: string, result: 'A' | 'DRAW' | 'B') => {
-    const nextMatches = localMatches.map((item) =>
-      item.id === matchId
-        ? {
-            ...item,
-            result,
-          }
-        : item
-    );
-    setLocalMatches(nextMatches);
-    await persistMatches(nextMatches);
-    setResultPickerFor(null);
+    try {
+      const nextMatches = localMatches.map((item) =>
+        item.id === matchId
+          ? {
+              ...item,
+              result,
+            }
+          : item
+      );
+      setLocalMatches(nextMatches);
+      await persistMatches(nextMatches);
+      setResultPickerFor(null);
+      Alert.alert('Sucesso', 'Resultado da partida definido com sucesso.');
+    } catch {
+      Alert.alert('Erro', 'Falha ao salvar resultado da partida.');
+    }
   };
 
   const resultLabel = (item: Match) => {
@@ -42,6 +56,20 @@ export function MatchesListScreen({ isActive }: Props) {
     if (item.result === 'B') return `Vencedor: ${item.roomB}`;
     if (item.result === 'DRAW') return 'Resultado: Empate';
     return 'Resultado: Nao definido';
+  };
+
+  const fetchMatchesFromApi = async () => {
+    setApiLoading(true);
+    try {
+      const data = await getMatchesApi();
+      setApiMatches(data);
+      setApiModalVisible(true);
+      Alert.alert('Sucesso', 'Partidas carregadas da API.');
+    } catch {
+      Alert.alert('Erro', 'Falha ao buscar partidas na API.');
+    } finally {
+      setApiLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -53,9 +81,14 @@ export function MatchesListScreen({ isActive }: Props) {
   return (
     <View style={styles.card}>
       <Text style={styles.title}>Lista de Partidas</Text>
-      <Text style={styles.subtitleText}>Painel unificado com partidas locais e dados da API.</Text>
-      <Pressable style={styles.primaryButton} onPress={loadData} disabled={loading}>
+      <Text style={styles.subtitleText}>Painel unificado com partidas locais salvas no AsyncStorage.</Text>
+      <Pressable style={styles.primaryButton} onPress={() => loadData(true)} disabled={loading}>
         <Text style={styles.primaryButtonText}>{loading ? 'Atualizando...' : 'Atualizar Lista'}</Text>
+      </Pressable>
+      <Pressable style={styles.secondaryButton} onPress={fetchMatchesFromApi} disabled={apiLoading}>
+        <Text style={styles.secondaryButtonText}>
+          {apiLoading ? 'Buscando...' : 'Buscar partidas na API'}
+        </Text>
       </Pressable>
 
       <Text style={styles.subtitle}>Partidas locais (AsyncStorage)</Text>
@@ -99,6 +132,32 @@ export function MatchesListScreen({ isActive }: Props) {
           </View>
         )}
       />
+
+      <Modal visible={apiModalVisible} transparent animationType="slide" onRequestClose={() => setApiModalVisible(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Partidas da API</Text>
+            <FlatList
+              data={apiMatches}
+              keyExtractor={(item) => String(item.id)}
+              ListEmptyComponent={<Text style={styles.empty}>Nenhuma partida retornada pela API.</Text>}
+              renderItem={({ item }) => (
+                <View style={styles.apiItemCard}>
+                  <Text style={styles.itemText}>
+                    {item.sport}: {item.homeTeam} x {item.awayTeam}
+                  </Text>
+                  <Text style={styles.itemSubtext}>
+                    {item.date} {item.hour} - {item.court}
+                  </Text>
+                </View>
+              )}
+            />
+            <Pressable style={styles.closeButton} onPress={() => setApiModalVisible(false)}>
+              <Text style={styles.closeButtonText}>Fechar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -131,6 +190,17 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  secondaryButton: {
+    marginTop: 8,
+    backgroundColor: '#E8EFFB',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    color: '#173A68',
     fontWeight: '700',
   },
   subtitle: {
@@ -201,5 +271,42 @@ const styles = StyleSheet.create({
     color: '#173A68',
     fontWeight: '700',
     fontSize: 12,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 14,
+    maxHeight: '75%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#102542',
+    marginBottom: 10,
+  },
+  apiItemCard: {
+    borderWidth: 1,
+    borderColor: '#DAE3F1',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 8,
+    backgroundColor: '#F7FAFF',
+  },
+  closeButton: {
+    marginTop: 6,
+    backgroundColor: '#173A68',
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
 });
