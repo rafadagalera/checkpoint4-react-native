@@ -36,7 +36,7 @@ export function RoomsScreen() {
       const nextRooms = [room, ...rooms];
       setRooms(nextRooms);
       await persistRooms(nextRooms);
-      await postRoomApi({ name: room.name });
+      await postRoomApi(room);
       setRoomName('');
       Alert.alert('Sucesso', 'Sala salva no AsyncStorage e enviada via POST.');
     } catch {

@@ -2,26 +2,27 @@ from typing import Optional
 
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 
-class UserCreate(BaseModel):
-    name: str
-    username: str
-    email: EmailStr
+class ClassroomCreate(BaseModel):
+    Name: str
+    ID: str
 
 
-class User(UserCreate):
-    id: int
+class Classroom(ClassroomCreate):
+    pass
 
 
-class PostCreate(BaseModel):
-    title: str
-    body: str
-    userId: int
+class MatchCreate(BaseModel):
+    homeTeam: str
+    awayTeam: str
+    date: str
+    hour: str
+    court: str
 
 
-class Post(PostCreate):
+class Match(MatchCreate):
     id: int
 
 
@@ -36,10 +37,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-users_db: list[User] = []
-posts_db: list[Post] = []
-next_user_id = 1
-next_post_id = 1
+classrooms_db: list[Classroom] = []
+matches_db: list[Match] = []
+next_match_id = 1
 
 
 @app.get("/health")
@@ -47,26 +47,24 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.post("/users")
-def create_user(payload: UserCreate) -> User:
-    global next_user_id
-    user = User(id=next_user_id, **payload.model_dump())
-    users_db.append(user)
-    next_user_id += 1
-    return user
+@app.post("/classrooms")
+def create_classroom(payload: ClassroomCreate) -> Classroom:
+    classroom = Classroom(**payload.model_dump())
+    classrooms_db.append(classroom)
+    return classroom
 
 
-@app.post("/posts")
-def create_post(payload: PostCreate) -> Post:
-    global next_post_id
-    post = Post(id=next_post_id, **payload.model_dump())
-    posts_db.append(post)
-    next_post_id += 1
-    return post
+@app.post("/matches")
+def create_match(payload: MatchCreate) -> Match:
+    global next_match_id
+    match = Match(id=next_match_id, **payload.model_dump())
+    matches_db.append(match)
+    next_match_id += 1
+    return match
 
 
-@app.get("/posts")
-def list_posts(_limit: Optional[int] = Query(default=None, ge=1)) -> list[Post]:
+@app.get("/matches")
+def list_matches(_limit: Optional[int] = Query(default=None, ge=1)) -> list[Match]:
     if _limit is None:
-        return posts_db
-    return posts_db[:_limit]
+        return matches_db
+    return matches_db[:_limit]

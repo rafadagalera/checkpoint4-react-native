@@ -25,18 +25,24 @@ npm run start
 
 ## Testes rápidos com curl
 
-```bash
-curl -X POST "http://127.0.0.1:8000/users" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"2A","username":"2a","email":"2a@escola.com"}'
-```
+### 1) Cadastrar sala (POST `/classrooms`)
 
 ```bash
-curl -X POST "http://127.0.0.1:8000/posts" \
+curl -X POST "http://127.0.0.1:8000/classrooms" \
   -H "Content-Type: application/json" \
-  -d '{"title":"Futsal: 2A x 2B","body":"Data 20/03/2026 14:30 - Local Quadra 1","userId":4}'
+  -d '{"Name":"2A","ID":"1700000000000"}'
 ```
 
+### 2) Cadastrar partida (POST `/matches`)
+
 ```bash
-curl -X GET "http://127.0.0.1:8000/posts?_limit=8"
+curl -X POST "http://127.0.0.1:8000/matches" \
+  -H "Content-Type: application/json" \
+  -d '{"homeTeam":"2A","awayTeam":"2B","date":"20/03/2026","hour":"14:30","court":"Quadra 1"}'
+```
+
+### 3) Listar partidas (GET `/matches`)
+
+```bash
+curl -X GET "http://127.0.0.1:8000/matches?_limit=8"
 ```

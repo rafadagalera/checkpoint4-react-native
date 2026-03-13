@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
 import { Button, FlatList, StyleSheet, Text, View } from 'react-native';
-import { ExternalPost, getMatchesApi } from '../services/api';
+import { ExternalMatch, getMatchesApi } from '../services/api';
 import { getStoredMatches } from '../storage/matchesStorage';
 import { Match } from '../types';
 
@@ -11,7 +11,7 @@ interface Props {
 
 export function MatchesListScreen({ isActive }: Props) {
   const [localMatches, setLocalMatches] = useState<Match[]>([]);
-  const [externalMatches, setExternalMatches] = useState<ExternalPost[]>([]);
+  const [externalMatches, setExternalMatches] = useState<ExternalMatch[]>([]);
   const [loading, setLoading] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -63,7 +63,10 @@ export function MatchesListScreen({ isActive }: Props) {
         renderItem={({ item }) => (
           <View style={styles.itemCard}>
             <Text style={styles.itemText}>
-              #{item.id} - {item.title}
+              #{item.id} - {item.homeTeam} x {item.awayTeam}
+            </Text>
+            <Text style={styles.itemSubtext}>
+              {item.date} {item.hour} - {item.court}
             </Text>
           </View>
         )}

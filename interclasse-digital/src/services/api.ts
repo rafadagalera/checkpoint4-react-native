@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
-import { Match } from '../types';
+import { Match, Room } from '../types';
 
 const API_BASE_URL =
   Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
@@ -10,44 +10,51 @@ const api = axios.create({
   timeout: 8000,
 });
 
-export interface ExternalPost {
-  userId: number;
+export interface ExternalMatch {
   id: number;
-  title: string;
-  body: string;
+  homeTeam: string;
+  awayTeam: string;
+  date: string;
+  hour: string;
+  court: string;
 }
 
 export interface RoomPayload {
-  name: string;
+  Name: string;
+  ID: string;
 }
 
 export interface MatchPayload {
-  title: string;
-  body: string;
-  userId: number;
+  homeTeam: string;
+  awayTeam: string;
+  date: string;
+  hour: string;
+  court: string;
 }
 
-export async function postRoomApi(payload: RoomPayload) {
-  const response = await api.post('/users', {
-    name: payload.name,
-    username: payload.name.toLowerCase().replace(/\s+/g, '_'),
-    email: `${payload.name.toLowerCase().replace(/\s+/g, '')}@escola.com`,
-  });
+export async function postRoomApi(room: Room) {
+  const payload: RoomPayload = {
+    Name: room.name,
+    ID: room.id,
+  };
+  const response = await api.post('/classrooms', payload);
   return response.data;
 }
 
 export async function postMatchApi(match: Match) {
   const payload: MatchPayload = {
-    title: `${match.sport}: ${match.roomA} x ${match.roomB}`,
-    body: `Data ${match.date} ${match.time} - Local ${match.location}`,
-    userId: match.roomA.length + match.roomB.length,
+    homeTeam: match.roomA,
+    awayTeam: match.roomB,
+    date: match.date,
+    hour: match.time,
+    court: match.location,
   };
-  const response = await api.post('/posts', payload);
+  const response = await api.post('/matches', payload);
   return response.data;
 }
 
-export async function getMatchesApi(): Promise<ExternalPost[]> {
-  const response = await api.get<ExternalPost[]>('/posts', {
+export async function getMatchesApi(): Promise<ExternalMatch[]> {
+  const response = await api.get<ExternalMatch[]>('/matches', {
     params: { _limit: 8 },
   });
   return response.data;
