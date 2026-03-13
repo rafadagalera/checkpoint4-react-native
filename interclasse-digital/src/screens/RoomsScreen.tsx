@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { postRoomApi } from '../services/api';
@@ -116,19 +115,6 @@ export function RoomsScreen() {
         <Text style={styles.primaryButtonText}>{loading ? 'Salvando...' : 'Salvar Sala'}</Text>
       </Pressable>
 
-      <Text style={styles.subtitle}>Salas cadastradas</Text>
-      <FlatList
-        data={rooms}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text style={styles.empty}>Nenhuma sala cadastrada.</Text>}
-        renderItem={({ item }) => (
-          <View style={styles.itemRow}>
-            <MaterialCommunityIcons name="google-classroom" size={18} color="#1D3557" />
-            <Text style={styles.itemText}>{item.name}</Text>
-          </View>
-        )}
-      />
-
       <Text style={styles.subtitle}>Classificacao</Text>
       <View style={styles.tableHeader}>
         <Text style={[styles.tableCell, styles.roomColumn]}>Sala</Text>
@@ -201,18 +187,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#1D2D44',
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F3F8',
-  },
-  itemText: {
-    color: '#3C4A5B',
-    fontWeight: '600',
   },
   empty: {
     color: '#5A6678',

@@ -59,10 +59,10 @@ export default function App() {
               <Text style={styles.placeholderText}>
                 Acompanhe modalidades, organize salas e monte partidas em poucos toques.
               </Text>
+              <ModalitiesList modalities={modalities} onNavigate={setScreen} />
               <Pressable style={styles.clearStorageButton} onPress={clearAllStorage}>
                 <Text style={styles.clearStorageButtonText}>Limpar todo o storage</Text>
               </Pressable>
-              <ModalitiesList modalities={modalities} onNavigate={setScreen} />
             </ScrollView>
           ) : null}
 
@@ -163,7 +163,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 11,
     alignItems: 'center',
-    marginBottom: 12,
+    marginTop: 10,
+    marginBottom: 8,
   },
   clearStorageButtonText: {
     color: '#FFFFFF',
